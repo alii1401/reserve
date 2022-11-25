@@ -1,0 +1,80 @@
+{% extends 'reserve/layout.html' %}
+{% load static %}
+
+{% block body %}
+    <style>
+        #create-post{
+        background-color:aliceblue;
+    }
+    input{
+        margin-bottom: 10px;
+    }
+    input[type=submit]{
+        margin-top: 10px;
+    }
+    option{
+        text-align: center;
+    }
+    h6{
+        color: brown;
+        /* background-color: rgb(99, 34, 55); */
+    }
+    
+    </style>
+ <hr>
+    {% if message %}
+        {{ message }}
+    {% endif %}
+
+    {% if user.is_authenticated %}
+        <div class="container" id="reserve">
+            <i><h3 style="color:rgb(51, 21, 117);" id="tagh3">Appointment Reservation</h3></i>
+            <hr>
+            <!-- <i><h4>Appointment reservation</h4></i> -->
+
+            <form id="reserve-form">
+                {% csrf_token %}
+            <input class="col-12 form-control" type="number" placeholder="National Code" name="na-code" id="na-code">
+            <input class="col-12 form-control" type="number" placeholder="Phone Number" name="ph-num" id="ph-num">
+            <input class="col-12 form-control" type="date" name="" id="date-nobat">
+
+            <select class="col-12 form-control" name="" id="select-doctor">
+                <option value="">--Select your desired doctor--</option>
+                {% for inf in information %}
+                    <option value="{{inf.id}}">{{ inf.specialty }}--{{ inf.doctor_name }}</option>
+
+                {% endfor %}
+
+            </select>
+            <!-- <h6><b>Note that your turn is for {{ today }}</b></h6> -->
+
+            <input class="btn btn-primary col-12" type="submit" value="Reserve">
+
+            </form>
+        </div>
+    {% endif %}
+        
+            <div class="container" id="daily-schedule">
+                <i><h3>Daily Schedule</h3></i>
+                <h6>Select the desired date</h6>
+                <form id="daily-form">
+                    <input autofocus class="col-12 form-control" name="date" type="date" id="date-input">
+                    
+                    <input class="col-4 btn btn-primary" type="submit" value="search">
+
+                </form>
+
+                <div id="table-schedule">
+
+                </div>
+
+            </div>
+    
+            <div class="container" id="my-nobat">
+            </div>
+    
+            <div id="without-login">
+            </div>
+
+
+{% endblock %}

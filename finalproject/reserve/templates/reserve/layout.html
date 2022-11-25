@@ -1,0 +1,257 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}Reserve{% endblock %}</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link href=" {% static 'reserve/styles.css' %} " rel="stylesheet">
+        <!-- <script src="../../static/reserve/front-end.js"></script> -->
+        <style> 
+            /* body{
+                background-color: wheat;
+            } */
+            button{
+                margin: 5px;
+                
+            }
+            .log, .reg{
+                color: white;
+            }
+            input{
+                margin-bottom: 5px;
+            }
+            /* .navbar-brand{
+                border-style:inset;
+            } */
+            /* a{
+                margin-right: 5px;
+            } */
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-brown bg-light">
+            <a style="background-color:aqua ;color:rgb(38, 14, 5);" class="navbar-brand">Book a doctor's appointment</a>
+          
+            <div>
+              <ul class="navbar-nav mr-auto">
+                {% if user.is_authenticated %}
+
+                    <li class="nav-item">
+                        <button id="my-profile" class="btn btn-info col-12"><a class="nav-link col-12" ><strong>{{ user.username }}</strong></a></button>
+                    </li>
+
+                {% endif %}
+
+                
+                <li class="nav-item">
+                    <button id="btn-schedule" class="btn btn-success col-12"><a style="color: white;" class="nav-link col-12">Daily Schedule</a></button>
+                </li>
+                
+                {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <button id="btn-reserve" class="btn btn-success col-12 "><a class="nav-link col-12" >Reserve</a></button>
+                    </li>
+
+                    <li class="nav-item">
+                        <button id="btn-nobat" class="btn btn-success col-12"><a class="nav-link col-12" >My Appointment</a></button>
+                    </li>
+
+                    <li class="nav-item">
+                        <button class="btn btn-danger col-12"><a class="nav-link col-12" href="{% url 'reserve:logout' %}">Log Out</a></button>
+                    </li>
+
+                {% else %}
+                    <li class="nav-item">
+                        <button class="btn btn-primary col-12"><a class="nav-link col-12 log" href="{% url 'reserve:login' %}">Log In</a></button>
+                    </li>
+
+                    <li class="nav-item">
+                        <button class="btn btn-warning col-12"><a class="nav-link col-12 reg" href="{% url 'reserve:register' %}">Register</a></button>
+                    </li>
+
+                {% endif %}
+              </ul>
+            </div>
+          </nav>
+        <div id="content" class="body">
+            {% block body %}
+                {% block script %}
+                {% endblock %}
+
+            {% endblock %}
+        </div>
+    </body>
+    <script>
+        document.addEventListener("DOMContentLoaded", function(){
+            // document.querySelector('#date-input').style = 'none';
+            document.querySelector('#btn-schedule').addEventListener("click",() => schedule())
+            if (document.querySelector('#btn-reserve')){
+
+                document.querySelector('#btn-reserve').addEventListener("click",() => reserve())
+            }
+
+            if (document.querySelector('#btn-nobat')){
+
+                document.querySelector('#btn-nobat').addEventListener("click",() => myAppointment())
+            }
+
+            else{
+                document.querySelector('#daily-schedule').style.display = 'none';
+
+            }
+
+            // document.addEventListener("click",event =>{
+            //     const e = event.target;
+
+            //     if(e.id == 'btn-reserve'){
+            //         reserve()
+            //     }
+
+            //     if(e.id == 'btn-nobat'){
+            //         myAppointment()
+            //     }
+
+            //     if(e.id == 'btn-schedule'){
+            //         schedule()
+            //     }
+
+                
+                
+            // })
+            if (document.querySelector('#btn-reserve')){
+                reserve()
+
+            }
+        })
+
+            function reserve(){
+                
+                document.querySelector('#daily-schedule').style.display = 'none';
+                document.querySelector('#my-nobat').style.display = 'none'
+                document.querySelector('#reserve').style.display = 'block';
+
+                document.querySelector('#reserve-form').onsubmit = function(e){
+                    e.preventDefault();
+                    console.log(document.querySelector("#select-doctor").value)
+
+                    fetch('/reserve',{
+                        method:'POST',
+                        body:JSON.stringify({
+                            nationalCode: document.querySelector("#na-code").value,
+                            phoneNumber: document.querySelector("#ph-num").value,
+                            dateNobat: document.querySelector("#date-nobat").value,
+                            doctorId: document.querySelector("#select-doctor").value,
+                        })
+                    })
+                    // Clear out fields
+                    document.querySelector("#na-code").value = '';
+                    document.querySelector("#ph-num").value = '';
+                    document.querySelector("#date-nobat").value = '';
+                    document.querySelector("#select-doctor").value = '';
+
+                }
+            }
+
+            function myAppointment(){
+                document.querySelector('#reserve').style.display = 'none';
+                document.querySelector('#daily-schedule').style.display = 'none';
+                document.querySelector('#my-nobat').style.display = 'block';
+
+
+                fetch('/mynobat')
+                .then(res => res.json())
+                .then(reserves => {
+                    document.querySelector('#my-nobat').innerHTML = '';
+                    document.querySelector('#my-nobat').innerHTML += `<i><h3>My Appointments</h3></i>`;
+
+                    reserves.inf_turn.forEach(inf => {
+                        
+                        var div = document.createElement('div');
+
+                        div = ` <div class="col-12 border border-success" style=margin-bottom:5px; >
+                            
+
+                                 <h6>Specialty:</h6> ${inf.specialty}
+                                 <h6>Doctor:</h6> ${inf.doctor_name}
+                                 <h6>Date:</h6> ${inf.date} 
+                                 <h6>Time:</h6> ${inf.time} 
+
+                            </div>`;
+                            
+                        document.querySelector('#my-nobat').innerHTML += div;
+                             
+                    })
+                })
+
+            }
+
+            function schedule(){
+                // age kar nkrd bia model ro drst kon
+                // ye field is_active bzar oonayi ke darin tarikhan
+                // ro faal kon bad dar get method daryaftesh kon
+                
+                if (document.querySelector('#reserve') && document.querySelector('#my-nobat')){
+
+                    document.querySelector('#reserve').style.display = 'none';
+                    document.querySelector('#my-nobat').style.display = 'none';
+
+                }
+
+                document.querySelector('#daily-schedule').style.display = 'block';
+                console.log('omadim')
+
+                document.querySelector('#daily-form').onsubmit = function(e){
+                    e.preventDefault();
+                    var div = document.createElement('div');
+
+                    fetch('/schedule',{
+                        method : 'POST',
+                        body:JSON.stringify({
+                            date:document.querySelector("#date-input").value
+                        })
+                    })
+
+                    fetch('/getschedule')
+                    .then(res => res.json())
+                    .then(doctors => {
+                        document.querySelector('#table-schedule').innerHTML = '';
+                        console.log(doctors)
+                        if(doctors != ''){
+
+                            doctors.forEach(doctor => {
+                                var div = document.createElement('div');
+    
+                                div = `<div class="col-12 border border-danger" style= border:groove;margin-bottom:5px>
+                                     <h6>Specialty:</h6> ${doctor.specialty}
+                                     <h6>Doctor:</h6> ${doctor.doctor_name}
+                                     <h6>Capacity:</h6> ${doctor.capacity} 
+                                     <h6>Remained:</h6> ${doctor.mandeh}
+                                     <h6>Date:</h6> ${doctor.date} 
+                                     <h6>Time:</h6> ${doctor.time} 
+    
+                                </div> `
+    
+                                document.querySelector('#table-schedule').innerHTML += div
+    
+    
+                            })
+                            fetch('/initialstate',{
+                                method: 'POST'
+                            })
+                            // .then(res => res.json())
+                        }
+
+                        else{
+                            console.log('no')
+                            document.querySelector('#table-schedule').innerHTML = `<h5 style="color:red;">In this date there isn't doctor turn!</h5>`
+                        }
+                    })
+
+                }
+            }
+
+
+        
+    </script>
+</html>
