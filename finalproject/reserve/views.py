@@ -28,15 +28,23 @@ def index(request):
 
 @csrf_exempt 
 def reserve(request):
+    if request.method == 'GET':
+        return JsonResponse({
+                    "error":"Method must be POST!"
+                },status=404)
 
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         doctor_id = data.get("doctorId")
         date0 = data.get("dateNobat")
-        print(date0)
 
         try:
             doctor = Doctors.objects.get(id = doctor_id, date=date0)
+            # if doctor is None:
+            #     return JsonResponse({
+            #         "error":"Doctor nist"
+            #     },status=404)
             print(doctor)
 
             if int(doctor.mandeh) == 0:
@@ -50,11 +58,11 @@ def reserve(request):
             else:
                 flag = 0
                 user_inf = UserInf.objects.get(username = request.user)
-   
+
                 user_check = Reserve.objects.get(username = user_inf)
                 if user_check.inf_turn:
-                    for dr in user_check.inf_turn:
-                        if dr == doctor and dr.date == date0:
+                    # for dr in user_check:
+                    if user_check.inf_turn == doctor:
                             flag = 1
 
                             return JsonResponse({
@@ -69,6 +77,12 @@ def reserve(request):
                     doctor.nobat += 1
                     doctor.save(update_fields=['mandeh','nobat'])
 
+                    # return HttpResponse(status = 204)
+                    return JsonResponse({
+                                "message":"success!" 
+                            },status=404) 
+
+
                 elif flag != 1 :
                     res = Reserve() 
                     res.username = user_inf
@@ -81,22 +95,35 @@ def reserve(request):
                     doctor.save(update_fields=['mandeh','nobat'])
 
 
-                return HttpResponse(status = 204)
+                    # return HttpResponse(status = 204)
+                    return JsonResponse({
+                                "message":"success!"
+                            },status=404) 
 
         except Doctors.DoesNotExist:
             return JsonResponse({
-                "error": "dar in tarikh, doctor morednazar yaft nshod!"},
+                "error": "The doctor was not found on the desired date!"},
                 status=404)
             
 
 @api_view(['GET'])
 def my_appointment(request):
     if request.method == 'GET':
-        user_inf = UserInf.objects.get(username = request.user)
-        reserves = Reserve.objects.get(username = user_inf)
-        serializer = ReserveSerializer(reserves, many=False)
+        # try:
+            user_inf = UserInf.objects.get(username = request.user)
+            reserves = Reserve.objects.get(username = user_inf)
+            # for reserve in reserves.inf_turn:
+            if reserves.inf_turn.exists() :
+                serializer = ReserveSerializer(reserves, many=False)
+                return Response(serializer.data)
+            else: 
+                 return JsonResponse({
+                    "error":"No turn has been registered for you!"
+                    },status=404)
 
-        return Response(serializer.data)
+        # except UserInf.DoesNotExist or Reserve.DoesNotExist:
+            
+
 
 
 @csrf_exempt 
@@ -132,14 +159,19 @@ def get_schedule(request):
 @csrf_exempt
 def initialstate(request):
     if request.method == 'POST':
-        doctors0 = Doctors.objects.all()
+        try:
+            doctors0 = Doctors.objects.all()
 
-        for dr0 in doctors0:
-            dr0.is_active = False
-            dr0.save(update_fields=['is_active'])
-            print("ok")
-        
-        return HttpResponse(status=204)
+            for dr0 in doctors0:
+                dr0.is_active = False
+                dr0.save(update_fields=['is_active'])
+                print("ok")
+            
+            return HttpResponse(status=204)
+        except Doctors.DoesNotExist:
+            return JsonResponse({
+                "error":"Doctor DoesNotExist!"
+            },status=404)
 
 
 
@@ -152,25 +184,36 @@ def initialstate(request):
 @csrf_exempt
 def login_view(request):
     if request.method == "POST":
+        try:
 
-        # Attempt to sign user in
-        username = request.POST["username"]
-        # print(username)
-        password = request.POST["password"]
-        u = User.objects.get(username = username, password=password)
-        print(u)
-   
-        # user = authenticate(request, username=username, password=password)
-        # print(user)
+            # Attempt to sign user in
+            username = request.POST["username"]
+            # print(username)
+            password = request.POST["password"]
+            u = User.objects.get(username = username, password=password)
+            print(u)
+    
+            # user = authenticate(request, username=username, password=password)
+            # print(user)
 
-        # Check if authentication successful
-        if u is not None:
-            login(request, u)
-            return HttpResponseRedirect(reverse("reserve:index"))
-        else:
-            return render(request, "reserve/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            # Check if authentication successful
+            if u is not None:
+                login(request, u)
+                return HttpResponseRedirect(reverse("reserve:index"))
+            else:
+                return render(request, "reserve/login.html", {
+                    "message": "Invalid username and/or password."
+                })
+        except User.DoesNotExist:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return HttpResponseRedirect(reverse("reserve:index"))
+            else:
+                return render(request, "reserve/login.html", {
+                    "message": "Invalid username and/or password."
+                })
+
     else:
         return render(request, "reserve/login.html")
 

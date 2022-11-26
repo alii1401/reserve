@@ -3,7 +3,8 @@
 
 {% block body %}
     <style>
-        #create-post{
+    input:valid
+    #create-post{
         background-color:aliceblue;
     }
     input{
@@ -34,8 +35,8 @@
 
             <form id="reserve-form">
                 {% csrf_token %}
-            <input class="col-12 form-control" type="number" placeholder="National Code" name="na-code" id="na-code">
-            <input class="col-12 form-control" type="number" placeholder="Phone Number" name="ph-num" id="ph-num">
+            <input class="col-12 form-control" type="number" min="0011111111" max="9999999999" required placeholder="National Code" name="na-code" id="na-code">
+            <input class="col-12 form-control" type="number" min="00111111111" max="9999999999999" placeholder="Phone Number" name="ph-num" id="ph-num">
             <input class="col-12 form-control" type="date" name="" id="date-nobat">
 
             <select class="col-12 form-control" name="" id="select-doctor">
@@ -51,6 +52,7 @@
             <input class="btn btn-primary col-12" type="submit" value="Reserve">
 
             </form>
+            <div id="message-reserve"></div>
         </div>
     {% endif %}
         
